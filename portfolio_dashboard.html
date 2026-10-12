@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+        .card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+        .card .value.good {
+            color: #10b981;
+        }
+        .card .value.warning {
+            color: #f59e0b;
+        }
+        .card .value.danger {
+            color: #ef4444;
+        }
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chart-card h2 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 1.3em;
+        }
+        .table-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        .risk-pass {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .risk-fail {
+            color: #ef4444;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Portfolio Dashboard</h1>
+            <p>Real-time portfolio analysis and risk management</p>
+        </div>
+
+        <div class="summary-cards">
+            <div class="card">
+                <h3>Portfolio Value</h3>
+                <div class="value">$13,760.67</div>
+            </div>
+            <div class="card">
+                <h3>Invested CAD</h3>
+                <div class="value">$14,699.69</div>
+            </div>
+            <div class="card">
+                <h3>Invested USD</h3>
+                <div class="value">$1,662.45</div>
+            </div>
+            <div class="card">
+                <h3>Current Value CAD</h3>
+                <div class="value">$11,973.84</div>
+            </div>
+            <div class="card">
+                <h3>Current Value USD</h3>
+                <div class="value">$1,323.58</div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-card">
+                <h2>Portfolio Allocation</h2>
+                <canvas id="allocationChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h2>Position Size vs Risk Limit (8%)</h2>
+                <canvas id="riskChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h2>Conviction Distribution</h2>
+                <canvas id="convictionChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h2>Unrealized P&L by Position</h2>
+                <canvas id="pnlChart"></canvas>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h2>Position Details</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Currency</th>
+                        <th>Shares</th>
+                        <th>Entry Price</th>
+                        <th>Current Price</th>
+                        <th>Total Cost</th>
+                        <th>% Portfolio</th>
+                        <th>Stop Loss</th>
+                        <th>Target</th>
+                        <th>Recommendation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AMCI</td>
+                        <td>USD</td>
+                        <td>58.1638</td>
+                        <td>$4.31</td>
+                        <td>$2.78</td>
+                        <td>$357.26</td>
+                        <td>5.8%</td>
+                        <td>$3.88</td>
+                        <td>$5.17</td>
+                        <td class="risk-fail">BEARISH</td>
+                    </tr>
+                    <tr>
+                        <td>AVGO CDR</td>
+                        <td>CAD</td>
+                        <td>29.4613</td>
+                        <td>$13.74</td>
+                        <td>$13.74</td>
+                        <td>$501.24</td>
+                        <td>2.9%</td>
+                        <td>$12.37</td>
+                        <td>$16.49</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>AXTI</td>
+                        <td>USD</td>
+                        <td>0.6925</td>
+                        <td>$68.70</td>
+                        <td>$68.80</td>
+                        <td>$48.46</td>
+                        <td>0.8%</td>
+                        <td>$61.83</td>
+                        <td>$82.44</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>CRWV CDR</td>
+                        <td>CAD</td>
+                        <td>21.0881</td>
+                        <td>$15.51</td>
+                        <td>$15.51</td>
+                        <td>$500.00</td>
+                        <td>2.9%</td>
+                        <td>$13.96</td>
+                        <td>$18.61</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>MDA.TO</td>
+                        <td>CAD</td>
+                        <td>1.3559</td>
+                        <td>$41.41</td>
+                        <td>$40.18</td>
+                        <td>$80.00</td>
+                        <td>0.5%</td>
+                        <td>$37.27</td>
+                        <td>$49.69</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>META CDR</td>
+                        <td>CAD</td>
+                        <td>26.3896</td>
+                        <td>$26.65</td>
+                        <td>$38.04</td>
+                        <td>$1,070.10</td>
+                        <td>6.3%</td>
+                        <td>$23.99</td>
+                        <td>$31.98</td>
+                        <td class="risk-pass">BULLISH</td>
+                    </tr>
+                    <tr>
+                        <td>MRVL</td>
+                        <td>USD</td>
+                        <td>3.0827</td>
+                        <td>$303.53</td>
+                        <td>$274.72</td>
+                        <td>$935.45</td>
+                        <td>15.2%</td>
+                        <td>$273.18</td>
+                        <td>$364.24</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>MU CDR</td>
+                        <td>CAD</td>
+                        <td>29.8665</td>
+                        <td>$31.59</td>
+                        <td>$45.07</td>
+                        <td>$1,506.51</td>
+                        <td>8.8%</td>
+                        <td>$28.43</td>
+                        <td>$37.91</td>
+                        <td class="risk-pass">BULLISH</td>
+                    </tr>
+                    <tr>
+                        <td>NVTS</td>
+                        <td>USD</td>
+                        <td>20.5946</td>
+                        <td>$10.81</td>
+                        <td>$10.80</td>
+                        <td>$280.75</td>
+                        <td>4.5%</td>
+                        <td>$9.73</td>
+                        <td>$12.97</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>QSI</td>
+                        <td>USD</td>
+                        <td>29.1825</td>
+                        <td>$1.54</td>
+                        <td>$1.54</td>
+                        <td>$40.52</td>
+                        <td>0.7%</td>
+                        <td>$1.39</td>
+                        <td>$1.85</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>SNDK CDR</td>
+                        <td>CAD</td>
+                        <td>25.4936</td>
+                        <td>$39.35</td>
+                        <td>$38.35</td>
+                        <td>$1,429.94</td>
+                        <td>8.4%</td>
+                        <td>$35.42</td>
+                        <td>$47.22</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>SPCX CDR</td>
+                        <td>CAD</td>
+                        <td>35.4603</td>
+                        <td>$28.35</td>
+                        <td>$27.04</td>
+                        <td>$1,006.72</td>
+                        <td>5.9%</td>
+                        <td>$25.52</td>
+                        <td>$34.02</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>WDC CDR</td>
+                        <td>CAD</td>
+                        <td>3.8876</td>
+                        <td>$24.22</td>
+                        <td>$24.22</td>
+                        <td>$116.62</td>
+                        <td>0.7%</td>
+                        <td>$21.80</td>
+                        <td>$29.06</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>GOLD</td>
+                        <td>CAD</td>
+                        <td>0.8859</td>
+                        <td>$6,927.66</td>
+                        <td>$5,980.25</td>
+                        <td>$6,133.78</td>
+                        <td>36.0%</td>
+                        <td>$5,382.23</td>
+                        <td>$7,176.30</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                    </tr>
+                    <tr>
+                        <td>PLTO</td>
+                        <td>CAD</td>
+                        <td>336.0000</td>
+                        <td>$0.08</td>
+                        <td>$0.02</td>
+                        <td>$26.88</td>
+                        <td>0.2%</td>
+                        <td>$0.02</td>
+                        <td>$0.10</td>
+                        <td class="risk-fail">BEARISH</td>
+                    </tr>
+                    <tr>
+                        <td>SVR</td>
+                        <td>CAD</td>
+                        <td>54.6061</td>
+                        <td>$42.63</td>
+                        <td>$27.51</td>
+                        <td>$2,327.90</td>
+                        <td>13.6%</td>
+                        <td>$24.76</td>
+                        <td>$51.16</td>
+                        <td class="risk-fail">BEARISH</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-container">
+            <h2>Market Analysis & Recommendations</h2>
+            <div style="margin-bottom: 20px;">
+                <h3>Overall Market Sentiment: <span style="color: #ef4444; font-weight: bold;">BEARISH</span></h3>
+                <p>Portfolio is currently at a loss of -$1,233.50. Market volatility present with positions down from entry.</p>
+            </div>
+
+            <h3>Position Analysis</h3>
+            <table style="margin-bottom: 20px;">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Recommendation</th>
+                        <th>Market Analysis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AMCI</td>
+                        <td class="risk-fail">BEARISH</td>
+                        <td>Small cap robotics stock experiencing significant decline from entry. Sector volatility high.</td>
+                    </tr>
+                    <tr>
+                        <td>AVGO CDR</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Networking and semiconductor diversification. AI infrastructure demand stable.</td>
+                    </tr>
+                    <tr>
+                        <td>AXTI</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Small position in compound semiconductor materials. Volatile but niche market.</td>
+                    </tr>
+                    <tr>
+                        <td>CRWV CDR</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>AI infrastructure play. Flat at entry price, waiting for catalyst.</td>
+                    </tr>
+                    <tr>
+                        <td>MDA.TO</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Canadian space/defense technology. Small position, stable sector.</td>
+                    </tr>
+                    <tr>
+                        <td>META CDR</td>
+                        <td class="risk-pass">BULLISH</td>
+                        <td>Strong recovery from entry, social media/ads demand resilient. AI investments driving growth.</td>
+                    </tr>
+                    <tr>
+                        <td>MRVL</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Semiconductor sector facing headwinds, but data center demand remains strong. Near support level.</td>
+                    </tr>
+                    <tr>
+                        <td>MU CDR</td>
+                        <td class="risk-pass">BULLISH</td>
+                        <td>DRAM cycle favorable, strong gains from entry. AI and data center memory demand driving prices.</td>
+                    </tr>
+                    <tr>
+                        <td>NVTS</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Power semiconductor company. Small position, flat performance. Consider increasing if EV demand grows.</td>
+                    </tr>
+                    <tr>
+                        <td>QSI</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Protein sequencing technology. Small speculative position, high risk/reward.</td>
+                    </tr>
+                    <tr>
+                        <td>SNDK CDR</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Flash memory storage. Solid company but facing cyclical pressure. Good long-term hold.</td>
+                    </tr>
+                    <tr>
+                        <td>SPCX CDR</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Space company CDR. Private space sector volatile but promising long-term.</td>
+                    </tr>
+                    <tr>
+                        <td>WDC CDR</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Data storage drives. HDD market stable, flat performance. Good dividend candidate.</td>
+                    </tr>
+                    <tr>
+                        <td>GOLD</td>
+                        <td class="risk-pass">NEUTRAL</td>
+                        <td>Gold pullback from highs, serving as portfolio hedge. Inflation concerns may support prices.</td>
+                    </tr>
+                    <tr>
+                        <td>PLTO</td>
+                        <td class="risk-fail">BEARISH</td>
+                        <td>Penny stock with significant loss from entry. High risk, very speculative.</td>
+                    </tr>
+                    <tr>
+                        <td>SVR</td>
+                        <td class="risk-fail">BEARISH</td>
+                        <td>Silver ETF underperforming. Precious metals sector correction. Consider as inflation hedge.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Stock Recommendations</h3>
+            <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h4>1. SEMICONDUCTOR SECTOR (Hold/Monitor)</h4>
+                <ul>
+                    <li><strong>MRVL:</strong> Hold - semiconductor demand remains strong despite pullback</li>
+                    <li><strong>MU CDR:</strong> Hold - DRAM cycle supportive, recent gains indicate momentum</li>
+                    <li><strong>NVTS:</strong> Monitor - small position, consider adding if technicals improve</li>
+                </ul>
+
+                <h4>2. TECH/GROWTH (Accumulate)</h4>
+                <ul>
+                    <li><strong>META CDR:</strong> Strong performer, consider adding on pullbacks</li>
+                    <li><strong>AVGO CDR:</strong> AI infrastructure demand, good for long-term hold</li>
+                </ul>
+
+                <h4>3. NEW ADDITIONS TO CONSIDER</h4>
+                <ul>
+                    <li>Add defensive positions (utilities, consumer staples)</li>
+                    <li>Consider healthcare sector for diversification</li>
+                    <li>Add more ETFs for broad market exposure</li>
+                    <li>Small cap growth stocks for high-risk/high-reward</li>
+                </ul>
+
+                <h4>4. SECTOR REBALANCING</h4>
+                <ul>
+                    <li>Reduce semiconductor concentration from ~50% to ~30%</li>
+                    <li>Increase non-tech allocation to 40%+</li>
+                    <li>Add short positions for market neutrality (target 10-15%)</li>
+                </ul>
+
+                <h4>5. CASH MANAGEMENT</h4>
+                <ul>
+                    <li>Build 10% cash buffer (~$1,700)</li>
+                    <li>Use cash for opportunistic additions on market dips</li>
+                </ul>
+
+                <h4>Specific Actions</h4>
+                <ul>
+                    <li><span style="color: #10b981;">✓ Keep:</span> META CDR, MU CDR (strong performers)</li>
+                    <li><span style="color: #f59e0b;">⚠ Monitor:</span> MRVL, GOLD, SVR (recently underperforming)</li>
+                    <li><span style="color: #ef4444;">✗ Reduce:</span> Positions exceeding 8% limit (MRVL, MU CDR, SNDK CDR, SVR)</li>
+                    <li><span style="color: #10b981;">+ Add:</span> Defensive sectors, healthcare, more ETFs</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h2>Market News</h2>
+            <div style="margin-bottom: 20px;">
+                <p>Latest news and updates related to your portfolio holdings</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">AMCI - Robotics Sector</h4>
+                    <p style="margin: 0; font-size: 0.9em; color: #666;">Robotics automation market faces volatility amid broader tech sector correction. Small-cap stocks experiencing significant decline from recent highs.</p>
+                    <small style="color: #999; margin-top: 10px; display: block;">2 hours ago</small>
+                </div>
+
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">META CDR - Social Media & AI</h4>
+                    <p style="margin: 0; font-size: 0.9em; color: #666;">Meta shows strong recovery with AI investments driving growth. Advertising demand remains resilient despite economic uncertainty.</p>
+                    <small style="color: #999; margin-top: 10px; display: block;">3 hours ago</small>
+                </div>
+
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">MRVL - Semiconductors</h4>
+                    <p style="margin: 0; font-size: 0.9em; color: #666;">Semiconductor sector facing headwinds but data center demand remains strong. Marvell near support levels as investors weigh AI growth prospects.</p>
+                    <small style="color: #999; margin-top: 10px; display: block;">4 hours ago</small>
+                </div>
+
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">MU CDR - Memory Chips</h4>
+                    <p style="margin: 0; font-size: 0.9em; color: #666;">DRAM cycle remains favorable with strong gains. AI and data center memory demand driving prices higher. Micron shows momentum.</p>
+                    <small style="color: #999; margin-top: 10px; display: block;">5 hours ago</small>
+                </div>
+
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #ef4444;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">GOLD - Precious Metals</h4>
+                    <p style="margin: 0; font-size: 0.9em; color: #666;">Gold pulls back from recent highs as market sentiment shifts. Inflation concerns continue to support precious metals as hedge.</p>
+                    <small style="color: #999; margin-top: 10px; display: block;">6 hours ago</small>
+                </div>
+
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #ef4444;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">SVR - Silver ETF</h4>
+                    <p style="margin: 0; font-size: 0.9em; color: #666;">Silver ETF underperforming as precious metals sector corrects. Industrial demand concerns weigh on silver prices.</p>
+                    <small style="color: #999; margin-top: 10px; display: block;">7 hours ago</small>
+                </div>
+
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">Semiconductor Sector Overall</h4>
+                    <p style="margin: 0; font-size: 0.9em; color: #666;">AI infrastructure demand continues to drive semiconductor investments. Data center expansion supports long-term growth outlook for chip makers.</p>
+                    <small style="color: #999; margin-top: 10px; display: block;">8 hours ago</small>
+                </div>
+
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">Market Outlook</h4>
+                    <p style="margin: 0; font-size: 0.9em; color: #666;">Tech sector volatility persists as investors digest earnings and economic data. Defensive sectors showing relative strength amid uncertainty.</p>
+                    <small style="color: #999; margin-top: 10px; display: block;">9 hours ago</small>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                <h4 style="margin: 0 0 10px 0; color: #856404;">⚠️ Note</h4>
+                <p style="margin: 0; font-size: 0.9em; color: #856404;">News items are based on market analysis and sector trends. For real-time news, consider integrating with financial news APIs like Bloomberg, Reuters, or Yahoo Finance.</p>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h2>Stock Recommendations by Sector</h2>
+            
+            <h3>1. Defensive Positions (Utilities & Consumer Staples)</h3>
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #333;">Utilities:</h4>
+                <ul>
+                    <li><strong>FPL.TO (Fortis Inc)</strong> - Canadian utility, stable dividend, low volatility</li>
+                    <li><strong>ENB.TO (Enbridge)</strong> - Energy infrastructure, high dividend yield (~7%)</li>
+                    <li><strong>H.TO (Hydro One)</strong> - Ontario electric utility, defensive holding</li>
+                </ul>
+                <h4 style="color: #333;">Consumer Staples:</h4>
+                <ul>
+                    <li><strong>L.TO (Loblaw Companies)</strong> - Retail grocery, defensive during downturns</li>
+                    <li><strong>MRU.TO (Metro Inc)</strong> - Food retailer, stable cash flows</li>
+                    <li><strong>ATD.TO (Alimentation Couche-Tard)</strong> - Convenience stores, global expansion</li>
+                </ul>
+                <p style="color: #666; font-style: italic;">Rationale: Defensive stocks provide stability and dividends during market volatility.</p>
+            </div>
+
+            <h3>2. Healthcare Sector (Diversification)</h3>
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #333;">Large Cap Healthcare:</h4>
+                <ul>
+                    <li><strong>JNJ (Johnson & Johnson)</strong> - Diversified healthcare, dividend aristocrat</li>
+                    <li><strong>PFE (Pfizer)</strong> - Pharmaceuticals, stable cash flows</li>
+                    <li><strong>UNH (UnitedHealth)</strong> - Health insurance, growth potential</li>
+                </ul>
+                <h4 style="color: #333;">Canadian Healthcare:</h4>
+                <ul>
+                    <li><strong>GIB.A.TO (CGI Inc)</strong> - IT services for healthcare</li>
+                    <li><strong>LIF.TO (Labrador Iron Ore)</strong> - Healthcare sector exposure</li>
+                </ul>
+                <p style="color: #666; font-style: italic;">Rationale: Healthcare provides non-cyclical exposure and defensive characteristics.</p>
+            </div>
+
+            <h3>3. ETFs for Broad Market Exposure</h3>
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #333;">Broad Market ETFs:</h4>
+                <ul>
+                    <li><strong>VOO (Vanguard S&P 500)</strong> - Broad US market exposure</li>
+                    <li><strong>VTI (Vanguard Total Stock Market)</strong> - Total US market</li>
+                    <li><strong>XIC.TO (iShares S&P/TSX 60)</strong> - Canadian large cap exposure</li>
+                </ul>
+                <h4 style="color: #333;">Sector ETFs:</h4>
+                <ul>
+                    <li><strong>XLV (Health Care Select Sector SPDR)</strong> - Healthcare sector</li>
+                    <li><strong>XLU (Utilities Select Sector SPDR)</strong> - Utilities sector</li>
+                    <li><strong>XLP (Consumer Staples Select Sector SPDR)</strong> - Consumer staples</li>
+                </ul>
+                <h4 style="color: #333;">Dividend ETFs:</h4>
+                <ul>
+                    <li><strong>SCHD (Schwab US Dividend Equity)</strong> - High dividend stocks</li>
+                    <li><strong>VYM (Vanguard High Dividend Yield)</strong> - Dividend focused</li>
+                </ul>
+                <p style="color: #666; font-style: italic;">Rationale: ETFs provide instant diversification and reduce single-stock risk.</p>
+            </div>
+
+            <h3>4. Small Cap Growth Stocks (High Risk/High Reward)</h3>
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #333;">Technology Small Caps:</h4>
+                <ul>
+                    <li><strong>COIN (Coinbase)</strong> - Cryptocurrency exchange, high volatility</li>
+                    <li><strong>PLTR (Palantir)</strong> - Data analytics, government contracts</li>
+                    <li><strong>UPST (Upstart)</strong> - AI lending, high growth potential</li>
+                </ul>
+                <h4 style="color: #333;">Canadian Small Caps:</h4>
+                <ul>
+                    <li><strong>SHOP.TO (Shopify)</strong> - E-commerce platform, growth story</li>
+                    <li><strong>DOO.TO (Dollarama)</strong> - Discount retail, expansion potential</li>
+                    <li><strong>BN.TO (Brookfield)</strong> - Asset management, global exposure</li>
+                </ul>
+                <p style="color: #666; font-style: italic;">Rationale: Small caps offer higher growth potential but with increased volatility.</p>
+            </div>
+
+            <h3 style="color: #10b981; border-bottom: 2px solid #10b981; padding-bottom: 10px;">Top 5 Recommended Stocks to Add</h3>
+            <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 10px 0;">1. VOO (Vanguard S&P 500 ETF)</h4>
+                <ul style="margin-bottom: 15px;">
+                    <li><strong>Rationale:</strong> Instant broad market diversification</li>
+                    <li><strong>Risk Level:</strong> Low</li>
+                    <li><strong>Allocation Suggestion:</strong> 10-15% of portfolio</li>
+                </ul>
+
+                <h4 style="margin: 0 0 10px 0;">2. ENB.TO (Enbridge)</h4>
+                <ul style="margin-bottom: 15px;">
+                    <li><strong>Rationale:</strong> High dividend yield (~7%), defensive utility</li>
+                    <li><strong>Risk Level:</strong> Low-Medium</li>
+                    <li><strong>Allocation Suggestion:</strong> 5-8% of portfolio</li>
+                </ul>
+
+                <h4 style="margin: 0 0 10px 0;">3. L.TO (Loblaw Companies)</h4>
+                <ul style="margin-bottom: 15px;">
+                    <li><strong>Rationale:</strong> Consumer staple, defensive, stable during downturns</li>
+                    <li><strong>Risk Level:</strong> Low</li>
+                    <li><strong>Allocation Suggestion:</strong> 5-8% of portfolio</li>
+                </ul>
+
+                <h4 style="margin: 0 0 10px 0;">4. SHOP.TO (Shopify)</h4>
+                <ul style="margin-bottom: 15px;">
+                    <li><strong>Rationale:</strong> Growth potential, e-commerce leader</li>
+                    <li><strong>Risk Level:</strong> High</li>
+                    <li><strong>Allocation Suggestion:</strong> 3-5% of portfolio</li>
+                </ul>
+
+                <h4 style="margin: 0 0 10px 0;">5. JNJ (Johnson & Johnson)</h4>
+                <ul>
+                    <li><strong>Rationale:</strong> Healthcare diversification, dividend aristocrat</li>
+                    <li><strong>Risk Level:</strong> Low-Medium</li>
+                    <li><strong>Allocation Suggestion:</strong> 5-8% of portfolio</li>
+                </ul>
+            </div>
+
+            <h3>Implementation Strategy</h3>
+            <div style="background: #fef3c7; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <h4 style="margin: 0 0 10px 0; color: #92400e;">Phase 1 (Immediate - Next 2 weeks)</h4>
+                <ul>
+                    <li>Add VOO (10%) for broad market exposure</li>
+                    <li>Add ENB.TO (5%) for dividend income</li>
+                    <li>Build 5% cash buffer</li>
+                </ul>
+
+                <h4 style="margin: 20px 0 10px 0; color: #92400e;">Phase 2 (Next 1-2 months)</h4>
+                <ul>
+                    <li>Add L.TO (5%) for consumer staples exposure</li>
+                    <li>Add JNJ (5%) for healthcare diversification</li>
+                    <li>Reduce positions exceeding 8% limit</li>
+                </ul>
+
+                <h4 style="margin: 20px 0 10px 0; color: #92400e;">Phase 3 (Long-term)</h4>
+                <ul>
+                    <li>Add SHOP.TO (3-5%) for growth</li>
+                    <li>Consider small cap additions if portfolio stabilizes</li>
+                    <li>Maintain 10% cash buffer for opportunities</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Portfolio Allocation Pie Chart
+        const allocationCtx = document.getElementById('allocationChart').getContext('2d');
+        new Chart(allocationCtx, {
+            type: 'pie',
+            data: {
+                labels: ['GOLD', 'SVR', 'MRVL', 'MU CDR', 'SNDK CDR', 'META CDR', 'SPCX CDR', 'AMCI', 'NVTS', 'AVGO CDR', 'CRWV CDR', 'WDC CDR', 'AXTI', 'QSI', 'MDA.TO', 'PLTO'],
+                datasets: [{
+                    data: [36.0, 13.6, 15.2, 8.8, 8.4, 6.3, 5.9, 5.8, 4.5, 2.9, 2.9, 0.7, 0.8, 0.7, 0.5, 0.2],
+                    backgroundColor: [
+                        '#fbbf24', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16',
+                        '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9',
+                        '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+
+        // Position Size vs Risk Limit Chart
+        const riskCtx = document.getElementById('riskChart').getContext('2d');
+        new Chart(riskCtx, {
+            type: 'bar',
+            data: {
+                labels: ['AMCI', 'AVGO CDR', 'AXTI', 'CRWV CDR', 'MDA.TO', 'META CDR', 'MRVL', 'MU CDR', 'NVTS', 'QSI', 'SNDK CDR', 'SPCX CDR', 'WDC CDR', 'GOLD', 'PLTO', 'SVR'],
+                datasets: [{
+                    label: 'Position Size (%)',
+                    data: [5.8, 2.9, 0.8, 2.9, 0.5, 6.3, 15.2, 8.8, 4.5, 0.7, 8.4, 5.9, 0.7, 36.0, 0.2, 13.6],
+                    backgroundColor: (context) => {
+                        const value = context.raw;
+                        const index = context.dataIndex;
+                        // GOLD (index 13) is excluded from limit
+                        if (index === 13) return '#9ca3af';
+                        return value <= 8 ? '#10b981' : '#ef4444';
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '% of Portfolio'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                },
+                plugins: {
+                    annotation: {
+                        annotations: {
+                            line1: {
+                                type: 'line',
+                                yMin: 8,
+                                yMax: 8,
+                                borderColor: 'rgb(255, 99, 132)',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                label: {
+                                    content: 'Risk Limit (8%)',
+                                    enabled: true,
+                                    position: 'end'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Conviction Distribution Chart
+        const convictionCtx = document.getElementById('convictionChart').getContext('2d');
+        new Chart(convictionCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
+                datasets: [{
+                    label: 'Number of Positions',
+                    data: [0, 1, 14, 0, 1],
+                    backgroundColor: '#6366f1'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+
+        // Unrealized P&L Chart
+        const pnlCtx = document.getElementById('pnlChart').getContext('2d');
+        new Chart(pnlCtx, {
+            type: 'bar',
+            data: {
+                labels: ['AMCI', 'AVGO CDR', 'AXTI', 'CRWV CDR', 'MDA.TO', 'META CDR', 'MRVL', 'MU CDR', 'NVTS', 'QSI', 'SNDK CDR', 'SPCX CDR', 'WDC CDR', 'GOLD', 'PLTO', 'SVR'],
+                datasets: [{
+                    label: 'Unrealized P&L ($)',
+                    data: [-88.99, 0, 0.07, 0, -1.67, 300.58, -88.81, 402.60, -0.21, 0, -25.49, -46.45, 0, -839.31, -20.16, -825.64],
+                    backgroundColor: (context) => {
+                        const value = context.raw;
+                        return value >= 0 ? '#10b981' : '#ef4444';
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'P&L ($)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
